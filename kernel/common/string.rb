@@ -1909,6 +1909,30 @@ class String
     result
   end
 
+  # Removes invalid byte sequences from a String, available since Ruby 2.1.
+  def scrub(replace = nil)
+    new_str = ''
+
+    if !replace and !block_given?
+      replace = "\xEF\xBF\xBD".force_encoding("UTF-8")
+        .encode(self.encoding, :undef => :replace, :replace => '?')
+    end
+
+    chars.each do |char|
+      if char.valid_encoding?
+        new_str << char
+      else
+        if block_given?
+          new_str << yield(char)
+        else
+          new_str << replace
+        end
+      end
+    end
+
+    return new_str
+  end
+
   def []=(index, count_or_replacement, replacement=undefined)
     if undefined.equal?(replacement)
       replacement = count_or_replacement
